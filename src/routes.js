@@ -7,7 +7,7 @@ var controllerSetTimer = require('./controllers/timers.js').setTimer;
 
 module.exports.routes = function(app){
     app.post(`/${config.bot_tocken}`, function (req, res) {
-        console.log(req.body);
+        //console.log(req.body);
         
         if (req.body.message && req.body.message.text == '/start'){
             controllerStart(req.body);
@@ -18,7 +18,6 @@ module.exports.routes = function(app){
         if (req.body.message && req.body.message.text.match(/^\d{1,} min\s{0,}$/)){
             controllerSetTimer(req.body);
         }
-
         res.send();
     })
 

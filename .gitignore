@@ -2,3 +2,5 @@
 private.key
 public.pem
 config.json
+/certificates-timer-bot
+readme.internal

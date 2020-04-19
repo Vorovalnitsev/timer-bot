@@ -1,30 +1,14 @@
-var express = require('express');
-var fs = require('fs');
-var https = require('https');
-var request = require('request');
-var bodyParser = require('body-parser');
-var async = require('async');
-var config = require('./config.json');
-var routes = require('./routes.js').routes;
-var app = express();
+const express = require('express');
+const fs = require('fs');
+const https = require('https');
+const telegram = require('./services/telegram.js');
+const bodyParser = require('body-parser');
+const async = require('async');
+const config = require('./config.json');
+const routes = require('./routes.js').routes;
+const app = express();
 
-//настраиваем запрос для установки вебхука
-var optionsToSetWebhook = {
-  'method': 'GET',
-  'url': `${config.telegram_api_server}bot${config.bot_tocken}/setWebhook`,
-  'headers': {
-  },
-  formData: {
-    'url': `${config.https_server.url}${config.bot_tocken}`,
-    'certificate': {
-      'value': fs.readFileSync(`${__dirname}/${config.https_server.certificates.public}`),
-      'options': {
-        'filename': 'public.pem',
-        'contentType': null
-      }
-    }
-  }
-};
+
 
 app.use(bodyParser.json());
 
@@ -38,8 +22,8 @@ async.series([
     console.log('*********************************************');
     console.log('Starting HTTPS server');
     https.createServer({
-      key: fs.readFileSync(`${__dirname}/${config.https_server.certificates.private}`),
-      cert: fs.readFileSync(`${__dirname}/${config.https_server.certificates.public}`)
+      key: fs.readFileSync(config.https_server.certificates.private),
+      cert: fs.readFileSync(config.https_server.certificates.public)
     }, app)
     .listen(config.https_server.port, function (err) {
       if(err){
@@ -57,7 +41,7 @@ async.series([
   function(callback){
     console.log('*********************************************');
     console.log('Setting webhook');
-    request(optionsToSetWebhook, function (err, res) { 
+    telegram.setWebHook(function(err, res){
       if (err){
         console.log(err);
         callback(true);
@@ -72,12 +56,34 @@ async.series([
           callback(true);
         }
       }
-    });
+    })
+  },
+  function(callback){
+    console.log('*********************************************');
+    console.log('Getting webhook info');
+    telegram.getWebHookInfo(function(err, res){
+      if (err){
+        console.log(err);
+        callback(true);
+      }
+      else{
+        console.log(`Response from telegram API ${res.body}`);
+        tmpRes = JSON.parse(res.body);
+
+        if(tmpRes.result && tmpRes.result.last_error_message){
+            callback(true);
+        }
+        else{
+          callback(null);
+        }
+      }
+    })
   }
 ],
 function(err, results) {
     if (err){
       console.log('Bot-server was not started');
+      process.exit(0);
     }
     else{
       console.log('Bot-server is started');

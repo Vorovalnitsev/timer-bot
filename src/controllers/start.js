@@ -13,21 +13,13 @@ module.exports.start = function(incomingMessage){
     };
     let outgoingMessage = {
         chat_id: incomingMessage.message.chat.id,
-        text: "Please, select time ...",
+        text: "Please, select the time",
         reply_markup: JSON.stringify(keyBoardMarkup)
     };
 
     sendMessage(outgoingMessage, function(err, res){
         if(err){
             console.log(err);
-        }
-        let tmpRes = JSON.parse(res.body);
-        if(tmpRes.ok){
-            console.log('ok')
-        }
-        else{
-            console.log(tmpRes.body)
-            console.log('not ok');
         }
     })
 }
