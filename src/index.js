@@ -7,8 +7,7 @@ const async = require('async');
 const config = require('./config.json');
 const routes = require('./routes.js').routes;
 const app = express();
-
-
+const mongoose = require('mongoose');
 
 app.use(bodyParser.json());
 
@@ -37,6 +36,24 @@ async.series([
         callback(null);
       }  
     });
+  },
+  function(callback){
+    console.log('*********************************************');
+    console.log('Connecting to mongo server');
+    mongoose.connect(config.mongo_connection_string, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
+      },
+      function(err){
+        if(err){
+          console.log(err);
+          callback(true);
+        }
+        else{
+          console.log('MongoDB is connected');
+          callback(null);
+        }
+      });
   },
   function(callback){
     console.log('*********************************************');
