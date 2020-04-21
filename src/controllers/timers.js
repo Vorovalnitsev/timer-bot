@@ -1,5 +1,6 @@
-var sendMessage = require('../services/telegram.js').sendMessage
-
+const sendMessage = require('../services/telegram.js').sendMessage;
+const serviceTimerLog = require('../services/timer-log.js');
+const async = require('async');
 module.exports.setTimer = function(incomingMessage){
     
     let timePattern = /^\d{1,} min\s{0,}$/;
@@ -29,24 +30,45 @@ module.exports.setTimer = function(incomingMessage){
         else{
             let outgoingMessage = {
                 chat_id: incomingMessage.message.chat.id,
-                text: `Timer ${timeStr} is started`,
-                reply_markup: JSON.stringify({ remove_keyboard: true})
+                text: `${incomingMessage.message.from.first_name}, Timer <b>${timeStr}</b> is started`,
+                reply_markup: JSON.stringify({ remove_keyboard: true}),
+                parse_mode: 'HTML'
             };
             
             sendMessage(outgoingMessage, function(err, res){
             });
-
-            setTimeout( () => {
-                let outgoingMessage = {
-                    chat_id: incomingMessage.message.chat.id,
-                    text: `Timer ${timeStr} is finished`
-                };
-                sendMessage(outgoingMessage, function(err, res){
-                    if(err){
-                        console.log(err);
+            async.waterfall([
+                function(callback){
+                    serviceTimerLog.newTimer(incomingMessage.update_id, true, function(err, timer){
+                        callback(null, timer);             
+                    })
+                },
+                function(timer, callback){
+                    setTimeout( () => {
+                        callback(null, timer)
                     }
-                })
-            }, 1000 * 60 * time);
+                    , 1000 * 60 * time);
+                },
+                function(timer, callback){
+                    let outgoingMessage = {
+                        chat_id: incomingMessage.message.chat.id,
+                        text: `${incomingMessage.message.from.first_name}, Timer <b>${timeStr}</b> is finished`,
+                        parse_mode: 'HTML'
+                    };
+                    sendMessage(outgoingMessage, function(err, res){
+                        if(err){
+                            console.log(err);
+                        }
+                        callback(null, timer);
+                    })
+                },
+                function(timer, callback){
+                    timer.timer_is_active = false;
+                    serviceTimerLog.updateTimer(timer, function(err, timer){
+                        callback(null);
+                    })
+                }
+            ]) 
         }
     }
 }

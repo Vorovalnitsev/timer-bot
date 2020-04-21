@@ -4,17 +4,17 @@ var controller500 = require('./controllers/500.js');
 var controllerStart = require('./controllers/start.js').start;
 var controllerHelp = require('./controllers/help.js').help;
 var controllerSetTimer = require('./controllers/timers.js').setTimer;
-var controllerTelegramLog  = require('./controllers/telegram-log.js');
+var serviceTelegramLog  = require('./services/telegram-log.js');
 
 module.exports.routes = function(app){
     app.post(`/${config.bot_tocken}`, function (req, res) {
         //console.log(req.body);
-        controllerTelegramLog.saveIncommingMessage(req.body);
+        serviceTelegramLog.newIncommingMessage(req.body);
         if (req.body.message && req.body.message.text){
-            if (req.body.message.text == '/start'){
+            if (req.body.message.text == '/start' || req.body.message.text == `/start${config.bot_username}`){
                 controllerStart(req.body);
             }
-            if (req.body.message.text.startsWith('/help')){
+            if (req.body.message.text == '/help'  || req.body.message.text == `/help${config.bot_username}`){
                 controllerHelp(req.body);
             }
             if (req.body.message.text.match(/^\d{1,} min\s{0,}$/)){
